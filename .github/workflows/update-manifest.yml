@@ -1,0 +1,101 @@
+# Regenerates index.json whenever a textlayer sidecar is added/changed/removed on
+# the main branch. The HebrewBooks desktop app polls index.json on startup; this
+# Action is what makes a freshly-merged contribution visible to end users within
+# minutes of merge.
+#
+# Triggers on push to main when textlayers/** changes — covers the "PR merged"
+# case directly (a PR-merge IS a push to main) without needing pull_request hooks.
+
+name: Update manifest
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'textlayers/**'
+      - '.github/workflows/update-manifest.yml'
+
+# Allow this workflow to push the regenerated index.json back to the repo.
+permissions:
+  contents: write
+
+# Single-in-flight: if two PRs merge close together, the second run waits for
+# the first to finish and rebases its push — avoids tag/push races.
+concurrency:
+  group: update-manifest
+  cancel-in-progress: false
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate index.json
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, hashlib, os, glob, pathlib, re
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          branch = 'main'
+
+          # Preserve the per-file Version counter across runs: load the existing
+          # manifest so we can BUMP version when the sidecar's hash changes and
+          # KEEP version when it doesn't (rebuilding the manifest after an
+          # unrelated change shouldn't churn every version).
+          existing = {}
+          if os.path.exists('index.json'):
+              try:
+                  with open('index.json', 'r', encoding='utf-8') as f:
+                      for e in json.load(f):
+                          existing[int(e['FileId'])] = e
+              except (json.JSONDecodeError, KeyError, ValueError):
+                  existing = {}
+
+          entries = []
+          for path in sorted(glob.glob('textlayers/*.pdf')):
+              name = pathlib.Path(path).stem
+              # FileID must be a positive integer matching Katalog.FileID — any
+              # non-numeric filename is rejected to keep the manifest clean.
+              if not re.fullmatch(r'\d+', name):
+                  print(f'::warning::skipping non-numeric filename: {path}')
+                  continue
+              file_id = int(name)
+              with open(path, 'rb') as f:
+                  sha = hashlib.sha256(f.read()).hexdigest()
+              size = os.path.getsize(path)
+              prev = existing.get(file_id)
+              if prev and prev.get('Sha256') == sha:
+                  version = prev.get('Version', 1)
+              elif prev:
+                  version = prev.get('Version', 0) + 1
+              else:
+                  version = 1
+              entries.append({
+                  'FileId': file_id,
+                  'Sha256': sha,
+                  'Version': version,
+                  'DownloadUrl': f'https://raw.githubusercontent.com/{repo}/{branch}/{path}',
+                  'SizeBytes': size,
+              })
+
+          with open('index.json', 'w', encoding='utf-8') as f:
+              json.dump(entries, f, indent=2, ensure_ascii=False)
+              f.write('\n')
+
+          print(f'manifest entries: {len(entries)}')
+          PYEOF
+
+      - name: Commit if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.json
+          if git diff --cached --quiet; then
+            echo "No manifest changes"
+            exit 0
+          fi
+          git commit -m "chore: regenerate manifest [skip ci]"
+          git push
