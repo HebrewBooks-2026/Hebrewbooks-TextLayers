@@ -7,6 +7,13 @@
     "SizeBytes": 2269508
   },
   {
+    "FileId": 46504,
+    "Sha256": "4076d6f58a7c58bcc54339f462572b515929f7a3fe41b494b06aa07b88776b8c",
+    "Version": 1,
+    "DownloadUrl": "https://raw.githubusercontent.com/HebrewBooks-2026/Hebrewbooks-TextLayers/main/textlayers/46504.pdf",
+    "SizeBytes": 77518
+  },
+  {
     "FileId": 49174,
     "Sha256": "df37910b0e11a66ca92187579f125805d8d6ce9727cde424bdf6440c3887e156",
     "Version": 1,
