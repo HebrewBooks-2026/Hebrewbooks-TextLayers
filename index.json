@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "FileId": 53165,
+    "Sha256": "cb8b909a6ac22071a70c3cb7fef92cfc5383cabe5e1901ecba45d90c86e02125",
+    "Version": 1,
+    "DownloadUrl": "https://raw.githubusercontent.com/HebrewBooks-2026/Hebrewbooks-TextLayers/main/textlayers/53165.pdf",
+    "SizeBytes": 841722
+  }
+]
