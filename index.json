@@ -19,5 +19,12 @@
     "Version": 1,
     "DownloadUrl": "https://raw.githubusercontent.com/HebrewBooks-2026/Hebrewbooks-TextLayers/main/textlayers/53165.pdf",
     "SizeBytes": 841722
+  },
+  {
+    "FileId": 5804,
+    "Sha256": "1dc0566fc03f143ae9606d956e7bce2da2ee561f93e0141833149188ebb0a1cb",
+    "Version": 1,
+    "DownloadUrl": "https://raw.githubusercontent.com/HebrewBooks-2026/Hebrewbooks-TextLayers/main/textlayers/5804.pdf",
+    "SizeBytes": 886201
   }
 ]
